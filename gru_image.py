@@ -16,12 +16,13 @@ import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+from scipy.interpolate import make_interp_spline
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.cuda.empty_cache()
 print(f"Using {device} device")
 
-df = pd.read_csv('./data/gru_input.csv')
+df = pd.read_csv('./data/one_match.csv', error_bad_lines=False)
 
 # 创建数据序列
 def create_sequences(df, n_steps):
@@ -49,11 +50,6 @@ X, y = create_sequences(df_scaled, n_steps)
 X_tensor = torch.tensor(X, dtype=torch.float32)
 y_tensor = torch.tensor(y, dtype=torch.float32)
 
-X_train = X_tensor[:int(0.7*len(X_tensor))]
-y_train = y_tensor[:int(0.7*len(y_tensor))]
-X_test = X_tensor[int(0.7*len(X_tensor)):]
-y_test = y_tensor[int(0.7*len(y_tensor)):]
-
 # 创建数据集和数据加载器
 class TennisDataset(Dataset):
     def __init__(self, sequences, labels):
@@ -65,7 +61,9 @@ class TennisDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
-    
+
+player1_performance = []
+player2_performance = []   
 def test_model(model, dataloader):
     with torch.no_grad():
         correct = 0
@@ -73,14 +71,16 @@ def test_model(model, dataloader):
         for sequences, labels in dataloader:
             sequences, labels = sequences.to(device), labels.to(device)
             outputs = model(sequences)
-            print(outputs)
+            softmax_outputs = torch.nn.functional.softmax(outputs, dim=1)
+            player1_performance.append(softmax_outputs[0][0].item())
+            player2_performance.append(softmax_outputs[0][1].item())
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     print(f'Accuracy: {correct / total}')
 
-test_dataset = TennisDataset(X_test, y_test)
-test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=True)
+test_dataset = TennisDataset(X_tensor, y_tensor)
+test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
 class GRUModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, n_layers):
@@ -106,3 +106,36 @@ state_dict = torch.load('./models/gru_model.pth')
 model.load_state_dict(state_dict)
 
 test_model(model, test_dataloader)
+
+weights = [0.1, 0.15, 0.2, 0.25, 0.3]
+player1_weighted = []
+player2_weighted = []
+def calculate_weighted_performance(performance_list, weights):
+    weighted_performance = []
+    for i in range(len(performance_list)):
+        if i < len(weights):
+            weighted_performance.append(performance_list[i])
+        else:
+            weighted_performance.append(np.dot(performance_list[i-len(weights):i], weights))
+    return weighted_performance
+
+player1_weighted = calculate_weighted_performance(player1_performance, weights)
+player2_weighted = calculate_weighted_performance(player2_performance, weights)
+
+x_new = np.linspace(1, len(player1_weighted), 1000)
+spl1 = make_interp_spline(range(1, len(player1_weighted) + 1), player1_weighted, k=5) 
+spl2 = make_interp_spline(range(1, len(player2_weighted) + 1), player2_weighted, k=5)
+player1_smooth = spl1(x_new)
+player2_smooth = spl2(x_new)
+player1_smooth_clipped = np.clip(player1_smooth, 0, 1)
+player2_smooth_clipped = np.clip(player2_smooth, 0, 1)
+
+plt.figure(figsize=(12, 4))
+plt.plot(x_new, player1_smooth_clipped, label='Player 1')
+plt.plot(x_new, player2_smooth_clipped, label='Player 2')
+plt.xlabel('Checkpoint')
+plt.ylabel('Performance')
+plt.legend()
+plt.tight_layout()
+plt.savefig('./image/realmatch_performance.png')
+plt.show()
