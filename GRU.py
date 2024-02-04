@@ -40,10 +40,10 @@ X, y = create_sequences(df_scaled, n_steps)
 X_tensor = torch.tensor(X, dtype=torch.float32)
 y_tensor = torch.tensor(y, dtype=torch.float32)
 
-X_train = X_tensor[:int(0.7*len(X_tensor))]
+""" X_train = X_tensor[:int(0.7*len(X_tensor))]
 y_train = y_tensor[:int(0.7*len(y_tensor))]
 X_test = X_tensor[int(0.7*len(X_tensor)):]
-y_test = y_tensor[int(0.7*len(y_tensor)):]
+y_test = y_tensor[int(0.7*len(y_tensor)):] """
 
 # 创建数据集和数据加载器
 class TennisDataset(Dataset):
@@ -59,7 +59,7 @@ class TennisDataset(Dataset):
 
 
 dataset = TennisDataset(X_tensor, y_tensor)
-dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
 """ dataset = TennisDataset(X_train, y_train)
 dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 test_dataset = TennisDataset(X_test, y_test)
@@ -110,26 +110,34 @@ def train_model(model, dataloader, criterion, optimizer, epochs):
     plt.tight_layout()
     plt.savefig('./image/gru_loss.png')
 
+player1_performance = []
+player2_performance = []   
 def test_model(model, dataloader):
-    model.eval()
     with torch.no_grad():
         correct = 0
         total = 0
         for sequences, labels in dataloader:
             sequences, labels = sequences.to(device), labels.to(device)
             outputs = model(sequences)
-            print(outputs)
+            softmax_outputs = torch.nn.functional.softmax(outputs, dim=1)
+            player1_performance.append(softmax_outputs[0][0].item())
+            player2_performance.append(softmax_outputs[0][1].item())
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     print(f'Accuracy: {correct / total}')
 
 train_model(model, dataloader, criterion, optimizer, epochs=20)
-# test_model(model, test_dataloader)
 test_model(model, dataloader)
 
 # 保存模型
 torch.save(model.state_dict(), './models/gru_model.pth')
+
+# 保存player1和player2的表现
+df['player1_performance'] = player1_performance
+df['player2_performance'] = player2_performance
+
+df.to_csv('./ablation_study/result_gru.csv', index=False)
 
 """ # 画出准确率随着n_steps的变化
 accuracies = []
