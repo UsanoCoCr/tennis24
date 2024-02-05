@@ -1,11 +1,10 @@
-\documentclass{article}
-
+\documentclass{ctexart}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{multirow}
 \usepackage{bbding}
 
-\title{Multicolumn Table Example}
+\title{Essay}
 \author{Your Name}
 \date{}
 
@@ -13,15 +12,68 @@
 
 \maketitle
 
-\begin{abstract}
-This document demonstrates how to create a table with multicolumn headers in LaTeX.
-\end{abstract}
+\section{Data Cleaning}
+我们的主要模型将任务处理为了一个二分类问题，而原题中的数据集有很多特征表示并不是可读取的类型，或者并不适用于二分类任务，所以我们首先更改了数据的格式，
+将p1\_score, p2\_score, winner\_shot\_type进行了转换，将网球特殊的计分规则转化成0,1,2,3,4这样的一般性计分规则，将正手和反手等特殊的击球方式转化成了0,1,2这样的分类特征。
+同时，为了获取特征重要性，我们在构造主要模型之前，使用了机器学习的方法，希望能够知道哪些特征对于比赛结果的影响最大，进而对这些特征进行增强。
+\subsection{Feature Engineering}
+\subsubsection{Lasso Regression Analysis}
+一开始我们使用了Lasso Regression的方法，因为Lasso Regression的损失函数中加入了L1正则项，有助于让模型忽略一些不相关的特征，使不重要的数据重要性分数趋于0。
 
-\section{Multicolumn Table Example}
 
-The table below demonstrates the use of multicolumn headers.
+\subsubsection{Over Sampling}
+但是lasso回归并没有展现出很好的效果，我们分析这是因为不平衡的数据导致的。毕竟顶尖的网球选手出现双发失误等情况的概率较小，很多变量的分布并不平均。
+\par (附图：一些特征的分布)\par
+为了处理不平衡的特征，我们使用了SMOTE(Synthetic Minority Over-sampling Technique)方法合成了少数类样本。
+通过SMOTE过采样，可以使得模型更好地学习到少数类别的特征，从而提高模型的泛化能力和准确性。此外，SMOTE过采样方法还可以减少模型的过拟合倾向，提高模型的鲁棒性。
+SMOTE过采样方法基于样本的特征空间，通过对少数类样本进行插值来生成合成样本。其主要步骤如下：\par
+1.对于每一个少数类样本，计算其与所有其他少数类样本之间的距离，并找到其K个最近邻居。\par
+2.从这K个最近邻居中随机选择一个样本，并计算该样本与当前样本的差异。\par
+3.根据差异比例，生成一个新的合成样本，该样本位于两个样本之间的连线上。\par
+4.重复上述步骤，生成指定数量的合成样本。
 
-\begin{table}[ht]
+\subsubsection{Random Forest Feature Importance}
+最终，我们使用了Random Forest的方法，通过对特征的重要性进行分析，我们最终选取ranfom forest的原因是它作为一种Ensemble Learning Method，
+拥有比较好的抗噪能力，同时不会出现过拟合的情况。
+\par (可能可以加入Random Forest的原理介绍？)\par
+在结果层面上，我们发现了一些特征对于比赛结果的影响较大，比如选手的Elo score，选手的体力、谁的发球局等等。
+\begin{table}[htbp]
+\centering
+\caption{Distribution of Some Features.}
+\label{tab:feature_distribution}
+\begin{tabular}{lcccc}
+\toprule
+Feature & 0 & 1 & 2 & Total \\
+\midrule
+Game Victor & 6096 & 616 & 572 & 7284 \\
+Winner shot type & 5619 & 1163 & 502 & 7284 \\
+P_i Ace & 13902 & 666 & - & 14568 \\
+P_i Winner & 12135 & 2433 & - & 14568 \\
+P_i Double Fault & 14314 & 254 & - & 14568 \\
+P_i Unforced Error & 12658 & 1910 & - & 14568 \\
+P_i Net Point & 12872 & 1696 & - & 14568 \\
+P_i Net Point Won & 13386 & 1182 & - & 14568 \\
+P_i Break Point & 14064 & 504 & - & 14568 \\
+P_i Break Point Won & 14391 & 177 & - & 14568 \\
+P_i Break Point Missed & 14241 & 327 & - & 14568 \\
+\bottomrule
+\end{tabular}
+\end{table}
+    
+
+\section{Extend Our Model}
+\subsection{Generalizing in Table Tennis}
+为了考察模型的泛化能力，我们使用了2021年东京奥运会的乒乓球男单决赛作为检验模型泛化能力的乒乓球数据集。用乒乓球来检验模型的泛化能力是因为乒乓球和网球有很多相似之处。
+但是，网络上并没有和题目所给的数据集相似的乒乓球数据集，于是我们使用了人工标注的方式，
+
+\section{Experiment Results}
+
+The table below demonstrates the sensitivity and comparison of different models.
+The candidate pool column indicates whether the candidate pool is used or not. 
+The quality column indicates whether the quality feature is used or not. 
+The accuracy columns show the average loss and the accuracy of the models for the Tennis, New Tennis, and Pingpong datasets.
+The Elo score column indicates whether the Elo score is used or not. The results show that the Lasso +$\lambda$GRU model with the candidate pool and quality features has the best performance for the Tennis and New Tennis datasets.
+\begin{table}[htbp]
 \centering
 \caption{Sensitivity and Comparison of Different Models.}
 \label{tab:multicolumn_table}
@@ -50,6 +102,11 @@ Model & Elo score & Quality & Avg loss & Tennis & New Tennis & Pingpong \\
 \bottomrule
 \end{tabularx}
 \end{table}
-    
 
+\subsection{Analysis}
+（这一部分是表格的描述）\par
+在我们的实验中，我们对于两个模型均选择了交叉熵损失函数作为模型的损失函数，在原始数据集上裁剪出了几场比赛作为测试集，为了检查我们模型的泛化能力，
+在对完整的数据集训练结束后，我们又只对训练集进行了训练，以测试模型对于新网球比赛的预测能力。相似的，我们选取了2021年东京奥运会的乒乓球男单决赛作为检验模型泛化能力的乒乓球数据集。
+这张表格反馈了不同的模型在对温网比赛的学习能力以及对其它比赛的泛化能力。从结果上我们可以看到，在我们的实验中，$\lambda$取0.5的情况下，
+模型又可以学习到更多的数据，有更强的准确性，同时还继承了Lasso Regression的泛化能力，找到了一个平衡点。
 \end{document}

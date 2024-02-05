@@ -107,20 +107,19 @@ model.load_state_dict(state_dict)
 
 test_model(model, test_dataloader)
 
-weights = [0.1, 0.15, 0.2, 0.25, 0.3]
-player1_weighted = []
-player2_weighted = []
-def calculate_weighted_performance(performance_list, weights):
-    weighted_performance = []
-    for i in range(len(performance_list)):
-        if i < len(weights):
-            weighted_performance.append(performance_list[i])
-        else:
-            weighted_performance.append(np.dot(performance_list[i-len(weights):i], weights))
-    return weighted_performance
+def calculate_discounted_performance(performance_list, decay_rate):
+    discounted_performance_vector = []
+    for i, performance in enumerate(reversed(performance_list)):
+        discounted_performance = (decay_rate ** i) * performance
+        discounted_performance_vector.append(discounted_performance)
+    # Reverse the vector to maintain the original order (oldest to most recent)
+    return list(reversed(discounted_performance_vector))
 
-player1_weighted = calculate_weighted_performance(player1_performance, weights)
-player2_weighted = calculate_weighted_performance(player2_performance, weights)
+decay_rate = 0.9
+
+# Assuming player1_performance and player2_performance are defined earlier in your code
+player1_weighted = calculate_discounted_performance(player1_performance, decay_rate)
+player2_weighted = calculate_discounted_performance(player2_performance, decay_rate)
 
 x_new = np.linspace(1, len(player1_weighted), 1000)
 spl1 = make_interp_spline(range(1, len(player1_weighted) + 1), player1_weighted, k=5) 
@@ -131,9 +130,9 @@ player1_smooth_clipped = np.clip(player1_smooth, 0, 1)
 player2_smooth_clipped = np.clip(player2_smooth, 0, 1)
 
 plt.figure(figsize=(12, 4))
-plt.plot(x_new, player1_smooth_clipped, label='Player 1')
-plt.plot(x_new, player2_smooth_clipped, label='Player 2')
-plt.xlabel('Checkpoint')
+plt.plot(x_new, player1_smooth_clipped, label='Carlos Alcaraz')
+plt.plot(x_new, player2_smooth_clipped, label='Novak Djokovic')
+plt.xlabel('Points Played')
 plt.ylabel('Performance')
 plt.legend()
 plt.tight_layout()

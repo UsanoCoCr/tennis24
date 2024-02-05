@@ -59,7 +59,7 @@ class TennisDataset(Dataset):
 
 
 dataset = TennisDataset(X_tensor, y_tensor)
-dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
 """ dataset = TennisDataset(X_train, y_train)
 dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 test_dataset = TennisDataset(X_test, y_test)
