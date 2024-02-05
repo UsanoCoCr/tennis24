@@ -17,6 +17,7 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 from scipy.interpolate import make_interp_spline
+import random
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.cuda.empty_cache()
@@ -101,7 +102,7 @@ hidden_dim = 128
 output_dim = 2
 n_layers = 5
 model = GRUModel(input_dim, hidden_dim, output_dim, n_layers).to(device)
-state_dict = torch.load('./models/gru_model.pth')
+state_dict = torch.load('./models/gru_without.pth')
 model.load_state_dict(state_dict)
 
 test_model(model, test_dataloader)
@@ -138,33 +139,69 @@ player1_discounted_vector = calculate_discounted_performance(player1_performance
 player2_discounted_vector = calculate_discounted_performance(player2_performance, decay_rate)
 player1_weighted, player2_weighted = normalize_vectors(player1_discounted_vector, player2_discounted_vector)
 
-""" print(player1_weighted[-1])
-print(player2_weighted[-1]) """
+print(player1_weighted[-1])
+print(player2_weighted[-1])
 
-x_new = np.linspace(1, len(player1_weighted), 2000)
-spl1 = make_interp_spline(range(1, len(player1_weighted) + 1), player1_weighted, k=3) 
-spl2 = make_interp_spline(range(1, len(player2_weighted) + 1), player2_weighted, k=3)
-player1_smooth = spl1(x_new)
-player2_smooth = spl2(x_new)
-player1_smooth_clipped = np.clip(player1_smooth, 0, 1)
-player2_smooth_clipped = np.clip(player2_smooth, 0, 1)
+random0 = random.uniform(0, 1)
+if random0 > 0.1:
+    print("serve_no: 1")
+else:
+    print("serve_no: 2")
 
-""" player1_smooth_clipped = player1_weighted
-player2_smooth_clipped = player2_weighted """
+random_number = random.uniform(0, 1)
+#print(random_number)
+if player1_weighted[-1] > random_number:
+    winner = 1
+else:
+    winner = 2
+print(winner)
 
-# save the performance vector in csv file
-""" df = pd.DataFrame({'player1': player1_smooth_clipped, 'player2': player2_smooth_clipped})
-df.to_csv('./Alcalaz/performance.csv', index=False) """
+random1 = random.uniform(0, 1)
+if random1 > 0.045:
+    print("pi_ace: no")
+else:
+    print("pi_ace: yes")
 
+random2 = random.uniform(0, 1)
+if random2 > 0.16:
+    print("pi_winner: no")
+else:
+    print("pi_winner: yes")
+    if random2 > 0.75:
+        print("pi_winner_shot_type: 2")
+    else:
+        print("pi_winner_shot_type: 1")
 
-plt.figure(figsize=(12, 4))
-plt.plot(x_new, player1_smooth_clipped, label='Novak Djokovic')
-plt.plot(x_new, player2_smooth_clipped, label='Carlos Alcaraz')
-""" plt.plot(range(1, len(player1_smooth_clipped) + 1), player1_smooth_clipped, label='Matteo Berrettini')
-plt.plot(range(1, len(player2_smooth_clipped) + 1), player2_smooth_clipped, label='Carlos Alcaraz') """
-plt.xlabel('Points Played')
-plt.ylabel('Performance')
-plt.legend()
-plt.tight_layout()
-plt.savefig('./Alcalaz/simulate.png')
-plt.show()
+random3 = random.uniform(0, 1)
+if random3 > 0.017:
+    print("pi_double_fault: no")
+else:
+    print("pi_double_fault: yes")
+
+random4 = random.uniform(0, 1)
+if random4 > 0.13:
+    print("pi_unf_err: no")
+else:
+    print("pi_unf_err: yes")
+
+random5 = random.uniform(0, 1)
+if random5 > 0.11:
+    print("pi_net: no")
+else:
+    print("pi_net: yes")
+    if random5 > 0.4:
+        print("pi_net_won: 1")
+    else:
+        print("pi_net_won: 0")
+
+random6 = random.uniform(0, 1)
+if random6 > 0.035:
+    print("pi_break_point: no")
+else:
+    print("pi_break_point: yes")
+    if random5 > 0.7:
+        print("pi_break_point_won: 1")
+        print("pi_break_point_missed: 0")
+    else:
+        print("pi_break_point_won: 0")
+        print("pi_break_point_missed: 1")

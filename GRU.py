@@ -104,11 +104,6 @@ def train_model(model, dataloader, criterion, optimizer, epochs):
             optimizer.step()
         losses.append(loss.item())
         print(f'Epoch {epoch+1}/{epochs}, Loss: {loss.item()}')
-    plt.plot(losses)
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.tight_layout()
-    plt.savefig('./image/gru_loss.png')
 
 player1_performance = []
 player2_performance = []   
@@ -131,7 +126,7 @@ train_model(model, dataloader, criterion, optimizer, epochs=20)
 test_model(model, dataloader)
 
 # 保存模型
-torch.save(model.state_dict(), './models/gru_model.pth')
+torch.save(model.state_dict(), './models/gru_model_without.pth')
 
 # 保存player1和player2的表现
 df['player1_performance'] = player1_performance
