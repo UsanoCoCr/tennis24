@@ -109,29 +109,52 @@ test_model(model, test_dataloader)
 
 def calculate_discounted_performance(performance_list, decay_rate):
     discounted_performance_vector = []
-    for i, performance in enumerate(reversed(performance_list)):
-        discounted_performance = (decay_rate ** i) * performance
+    n = len(performance_list)
+    for i, performance in enumerate(performance_list):
+        discount_factor = decay_rate * discounted_performance_vector[-1] if i > 0 else 1
+        discounted_performance = discount_factor + performance
         discounted_performance_vector.append(discounted_performance)
-    # Reverse the vector to maintain the original order (oldest to most recent)
-    return list(reversed(discounted_performance_vector))
+    return discounted_performance_vector
+
+def normalize_vectors(vector1, vector2):
+    assert len(vector1) == len(vector2), "Vectors must have the same length"
+    
+    normalized_vector1 = []
+    normalized_vector2 = []
+    
+    for v1, v2 in zip(vector1, vector2):
+        total = v1 + v2
+        if total > 0:
+            normalized_vector1.append(v1 / total)
+            normalized_vector2.append(v2 / total)
+        else:
+            normalized_vector1.append(0.5)
+            normalized_vector2.append(0.5)
+    
+    return normalized_vector1, normalized_vector2
 
 decay_rate = 0.9
 
-# Assuming player1_performance and player2_performance are defined earlier in your code
-player1_weighted = calculate_discounted_performance(player1_performance, decay_rate)
-player2_weighted = calculate_discounted_performance(player2_performance, decay_rate)
+player1_discounted_vector = calculate_discounted_performance(player1_performance, decay_rate)
+player2_discounted_vector = calculate_discounted_performance(player2_performance, decay_rate)
+player1_weighted, player2_weighted = normalize_vectors(player1_discounted_vector, player2_discounted_vector)
 
-x_new = np.linspace(1, len(player1_weighted), 1000)
-spl1 = make_interp_spline(range(1, len(player1_weighted) + 1), player1_weighted, k=5) 
-spl2 = make_interp_spline(range(1, len(player2_weighted) + 1), player2_weighted, k=5)
+x_new = np.linspace(1, len(player1_weighted), 2000)
+spl1 = make_interp_spline(range(1, len(player1_weighted) + 1), player1_weighted, k=3) 
+spl2 = make_interp_spline(range(1, len(player2_weighted) + 1), player2_weighted, k=3)
 player1_smooth = spl1(x_new)
 player2_smooth = spl2(x_new)
 player1_smooth_clipped = np.clip(player1_smooth, 0, 1)
 player2_smooth_clipped = np.clip(player2_smooth, 0, 1)
 
+""" player1_smooth_clipped = player1_discounted_vector
+player2_smooth_clipped = player2_discounted_vector
+ """
 plt.figure(figsize=(12, 4))
-plt.plot(x_new, player1_smooth_clipped, label='Carlos Alcaraz')
-plt.plot(x_new, player2_smooth_clipped, label='Novak Djokovic')
+plt.plot(x_new, player1_smooth_clipped, label='Novak Djokovic')
+plt.plot(x_new, player2_smooth_clipped, label='Carlos Alcaraz')
+""" plt.plot(range(1, len(player1_smooth_clipped) + 1), player1_smooth_clipped, label='Carlos Alcaraz')
+plt.plot(range(1, len(player2_smooth_clipped) + 1), player2_smooth_clipped, label='Novak Djokovic') """
 plt.xlabel('Points Played')
 plt.ylabel('Performance')
 plt.legend()
