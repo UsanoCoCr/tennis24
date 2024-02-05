@@ -22,7 +22,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.cuda.empty_cache()
 print(f"Using {device} device")
 
-df = pd.read_csv('./data/one_match.csv', error_bad_lines=False)
+df = pd.read_csv('./data/pingpong_updated_elo.csv', error_bad_lines=False)
 
 # 创建数据序列
 def create_sequences(df, n_steps):
@@ -151,13 +151,13 @@ player2_smooth_clipped = np.clip(player2_smooth, 0, 1)
 player2_smooth_clipped = player2_discounted_vector
  """
 plt.figure(figsize=(12, 4))
-plt.plot(x_new, player1_smooth_clipped, label='Novak Djokovic')
-plt.plot(x_new, player2_smooth_clipped, label='Carlos Alcaraz')
+plt.plot(x_new, player1_smooth_clipped, label='Ma Long')
+plt.plot(x_new, player2_smooth_clipped, label='Fan Zhendong')
 """ plt.plot(range(1, len(player1_smooth_clipped) + 1), player1_smooth_clipped, label='Carlos Alcaraz')
 plt.plot(range(1, len(player2_smooth_clipped) + 1), player2_smooth_clipped, label='Novak Djokovic') """
 plt.xlabel('Points Played')
 plt.ylabel('Performance')
 plt.legend()
 plt.tight_layout()
-plt.savefig('./image/realmatch_performance.png')
+plt.savefig('./image/pingpong_performance.png')
 plt.show()
