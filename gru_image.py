@@ -22,7 +22,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.cuda.empty_cache()
 print(f"Using {device} device")
 
-df = pd.read_csv('./data/pingpong_updated_elo.csv', error_bad_lines=False)
+df = pd.read_csv('./data/one_match.csv', error_bad_lines=False)
 
 # 创建数据序列
 def create_sequences(df, n_steps):
@@ -147,17 +147,22 @@ player2_smooth = spl2(x_new)
 player1_smooth_clipped = np.clip(player1_smooth, 0, 1)
 player2_smooth_clipped = np.clip(player2_smooth, 0, 1)
 
-""" player1_smooth_clipped = player1_discounted_vector
-player2_smooth_clipped = player2_discounted_vector
- """
+""" player1_smooth_clipped = player1_weighted
+player2_smooth_clipped = player2_weighted """
+
+# save the performance vector in csv file
+""" df = pd.DataFrame({'player1': player1_smooth_clipped, 'player2': player2_smooth_clipped})
+df.to_csv('./Alcalaz/performance.csv', index=False) """
+
+
 plt.figure(figsize=(12, 4))
-plt.plot(x_new, player1_smooth_clipped, label='Ma Long')
-plt.plot(x_new, player2_smooth_clipped, label='Fan Zhendong')
-""" plt.plot(range(1, len(player1_smooth_clipped) + 1), player1_smooth_clipped, label='Carlos Alcaraz')
-plt.plot(range(1, len(player2_smooth_clipped) + 1), player2_smooth_clipped, label='Novak Djokovic') """
+plt.plot(x_new, player1_smooth_clipped, label='Daniil Medvedev')
+plt.plot(x_new, player2_smooth_clipped, label='Carlos Alcaraz')
+""" plt.plot(range(1, len(player1_smooth_clipped) + 1), player1_smooth_clipped, label='Matteo Berrettini')
+plt.plot(range(1, len(player2_smooth_clipped) + 1), player2_smooth_clipped, label='Carlos Alcaraz') """
 plt.xlabel('Points Played')
 plt.ylabel('Performance')
 plt.legend()
 plt.tight_layout()
-plt.savefig('./image/pingpong_performance.png')
+plt.savefig('./Alcalaz/vsDaniilMedvedev.png')
 plt.show()
